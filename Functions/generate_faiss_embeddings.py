@@ -3,6 +3,7 @@ import numpy as np
 import torch
 from transformers import AutoTokenizer, AutoModel
 import json
+import os
 
 # Load BioBERT tokenizer and model
 tokenizer = AutoTokenizer.from_pretrained("dmis-lab/biobert-base-cased-v1.1")
@@ -10,7 +11,7 @@ model = AutoModel.from_pretrained("dmis-lab/biobert-base-cased-v1.1")
 
 def get_embedding(text):
     """Converts text into a BioBERT embedding vector."""
-    inputs = tokenizer(text, return_tensors="pt", truncation=True, padding=True)
+    inputs = tokenizer(text, return_tensors="pt", truncation=True, padding=True, max_length=512)
     with torch.no_grad():
         output = model(**inputs)
     return output.last_hidden_state[:, 0, :].numpy()
