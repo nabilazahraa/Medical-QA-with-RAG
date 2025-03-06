@@ -4,7 +4,7 @@
 <FocusAnnotations>
 	<UMLS>
 		<CUIs>
-			<CUI>C0751606</CUI>
+			<CUI>C0751606</CUI> 
 		</CUIs>
 		<SemanticTypes>
 			<SemanticType>T191</SemanticType>

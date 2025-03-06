@@ -10,7 +10,7 @@
 			<SemanticType>T019</SemanticType>
 			<SemanticType>T047</SemanticType>
 		</SemanticTypes>
-		<SemanticGroup>Disorders</SemanticGroup>
+		<SemanticGroup>Disorders</SemanticGroup> 
 	</UMLS>
 	<Synonyms>
 		<Synonym>Aarskog syndrome</Synonym>
