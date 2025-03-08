@@ -17,8 +17,14 @@ def get_embedding(text):
     return output.last_hidden_state[:, 0, :].numpy()
 
 # Initialize FAISS index for 768-dim BioBERT embeddings
+# dimension = 768
+# index = faiss.IndexFlatL2(dimension)
 dimension = 768
-index = faiss.IndexFlatL2(dimension)
+index = faiss.IndexFlatIP(dimension)  # Use inner product for cosine similarity
+
+def normalize_embedding(embedding):
+    return embedding / np.linalg.norm(embedding)
+
 
 # Store metadata for retrieval
 metadata = []
@@ -36,7 +42,9 @@ for json_file in os.listdir(local_json_folder):
                 answer = qa["answer"]
 
                 # Convert text to embedding
-                embedding = get_embedding(question)
+                # embedding = get_embedding(question)
+                # index.add(embedding)
+                embedding = normalize_embedding(get_embedding(question))
                 index.add(embedding)
 
                 # Store metadata
