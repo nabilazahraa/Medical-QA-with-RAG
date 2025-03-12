@@ -61,14 +61,14 @@ The system consists of **three key phases**:
 
 ---
 
-## ⏳ Proposed Schedule and Milestones
+<!-- ## ⏳ Proposed Schedule and Milestones
 
 | Week | Phase | Milestone |
 |------|-------|-----------|
 | **1-3**  | Phase 1 | Initial Setup and Dataset Integration |
 | **4-6**  | Phase 2 | Query Processing and API Development |
 | **7-9**  | Phase 3 | Front-End Development and Real-Time Testing |
-| **10-12** | Phase 4 | Performance Evaluation, Optimization |
+| **10-12** | Phase 4 | Performance Evaluation, Optimization | -->
 
 ---
 
