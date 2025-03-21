@@ -78,9 +78,11 @@ The system consists of **three key phases**:
 |------|------|--------|-------|
 | Week 8  | Initial Dataset Integration | Complete | Cleaning and preprocessing MedQuAD dataset |
 | Week 9  | FAISS/Pinecone Setup | Completed | Successfully indexed dataset embeddings |
-| Week 10 | Extract text from documents | In Progress | Extracting structured text from urls |
-| Week 10 | Query Processing API | In Progress | Implementing Lambda-based retrieval |
-<!-- | Week 1 | Front-End Development | 🚧 Pending | React UI implementation in pipeline | -->
+| Week 10 | Extract text from documents | Completed | Extracting structured text from urls |
+| Week 10 | Query Processing API | Completed | Implementing Lambda-based retrieval |
+| Week 11 | LLM Integration | In Progress | Answer generation |
+| Week 11 | Front-End Development | In Progress | React UI implementation in pipeline |
+
 
 *(The table will be updated as progress is made)*
 
