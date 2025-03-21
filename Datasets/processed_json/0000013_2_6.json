@@ -1,0 +1,16 @@
+{
+    "document_id": "0000013_2",
+    "source": "CancerGov",
+    "url": "https://www.cancer.gov/types/myeloproliferative/patient/chronic-treatment-pdq",
+    "focus": "Chronic Myelogenous Leukemia",
+    "qa_pairs": [
+        {
+            "question": "What is (are) Chronic Myelogenous Leukemia ?",
+            "answer": "Chronic myelogenous leukemia is a disease in which too many white blood cells are made in the bone marrow. See the PDQ summary on Chronic Myelogenous Leukemia Treatment for information on diagnosis, staging, and treatment."
+        },
+        {
+            "question": "What are the treatments for Chronic Myelogenous Leukemia ?",
+            "answer": "See the PDQ summary about Chronic Myelogenous Leukemia Treatment for information."
+        }
+    ]
+}

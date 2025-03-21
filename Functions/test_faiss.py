@@ -3,9 +3,8 @@ import numpy as np
 import torch
 from transformers import AutoTokenizer, AutoModel
 import json
-import os
-os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
+torch.set_num_threads(1)
 
 index = faiss.read_index("faiss embeddings/faiss_index.bin")
 with open("faiss embeddings/faiss_metadata.json", "r") as f:
@@ -40,7 +39,7 @@ def search_faiss(query, top_k=1):
     return results
 
 # Example Query
-query = "What are the symptoms of leukemia?"
+query = "What are the symptoms of Adult Acute Lymphoblastic Leukemia "
 results = search_faiss(query, top_k=3)
 
 # Print Results
@@ -52,3 +51,9 @@ for i, res in enumerate(results):
     print(f"Document ID: {res['document_id']}")
     print(f"Distance: {res['distance']}")
     print("-" * 50)
+#     aws s3 cp lambda_function.zip s3://med-qa-lambda
+
+# aws lambda update-function-code \--function-name get_answers \--s3-bucket med-qa-lambda \--s3-key lambda_function.zip
+
+
+# aws lambda invoke \--function-name lambda_handler \--payload '{"query": "What are the symptoms of leukemia?", "top_k": 3}' \response.json
