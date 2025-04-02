@@ -4,9 +4,9 @@ from sagemaker.model import Model
 from sagemaker import get_execution_role
 
 # Define AWS region and SageMaker role
-region = "us-east-1"
-role = "arn:aws:iam::108782095919:role/model-sagemaker"  # Ensure your IAM role has SageMaker access
-s3_model_path = "s3://model-embedding/MiniLM/model.tar.gz"
+region = "eu-north-1"
+role = "arn:aws:iam::861276078725:role/service-role/AmazonSageMaker-ExecutionRole-20250309T003483"  # Ensure your IAM role has SageMaker access
+s3_model_path = "s3://med-qa-model/model/model.tar.gz"
 
 # Hugging Face Model Environment
 environment = {
@@ -17,7 +17,7 @@ environment = {
 
 # Define model
 model = Model(
-    image_uri="763104351884.dkr.ecr.us-east-1.amazonaws.com/huggingface-pytorch-inference:1.13.1-transformers4.26.0-cpu-py39-ubuntu20.04",
+    image_uri="763104351884.dkr.ecr.eu-north-1.amazonaws.com/huggingface-pytorch-inference:1.10.2-transformers4.17.0-cpu-py38-ubuntu20.04",
     model_data=s3_model_path,
     role=role,
     name="sentence-transformer-miniLM",
@@ -26,14 +26,9 @@ model = Model(
 
 # Deploy model to endpoint
 predictor = model.deploy(
-    instance_type="ml.t2.medium",
+    instance_type="ml.m5.large",
     initial_instance_count=1,
-    endpoint_name="embedding-endpoint1",
+    endpoint_name="sentence-transformer-endpoint",
 )
-
-if predictor is None:
-    print("⚠️ Deployment failed — predictor is None.")
-else:
-    print(f"✅ Model deployed at endpoint: {predictor.endpoint_name}")
 
 print(f"Model deployed at endpoint: {predictor.endpoint_name}")
