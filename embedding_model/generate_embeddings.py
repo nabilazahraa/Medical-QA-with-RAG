@@ -1,26 +1,3 @@
-# import boto3
-# import json
-
-# # SageMaker runtime client
-# sagemaker_runtime = boto3.client("sagemaker-runtime")
-
-# # Endpoint name from deployment
-# endpoint_name = "sentence-transformer-endpoint"
-
-# # Input text for embedding
-# payload = {"inputs": "SageMaker is great for AI!"}
-
-# # Invoke endpoint
-# response = sagemaker_runtime.invoke_endpoint(
-#     EndpointName=endpoint_name,
-#     ContentType="application/json",
-#     Body=json.dumps(payload),
-# )
-
-# # Get embeddings
-# embeddings = json.loads(response["Body"].read().decode("utf-8"))
-# print(embeddings)
-
 import boto3
 import json
 

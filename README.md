@@ -4,7 +4,7 @@
 
 In the healthcare sector, timely access to accurate medical knowledge is critical for informed decision-making. This project aims to develop a **real-time medical document Question-Answering (QA) system** leveraging AWS cloud services for **scalable, low-latency information retrieval**. 
 
-By integrating a **vector database for document embedding retrieval** and a **large language model (BioBERT) for contextual Q&A**, we aim to provide **precise and instant responses** to medical queries. Our system will focus on **disease-related questions**, ensuring rapid and accurate access to key healthcare information.
+By integrating a **vector database for document embedding retrieval** and a **large language model for contextual Q&A**, we aim to provide **precise and instant responses** to medical queries. Our system will focus on **disease-related questions**, ensuring rapid and accurate access to key healthcare information.
 
 ---
 
@@ -18,7 +18,6 @@ The dataset covers:
 - Drug interactions
 - Genetic conditions
 
-To enhance **domain-specific medical comprehension**, we will fine-tune **BioBERT** on this dataset for improved accuracy in medical Q/A.
 
 ---
 
@@ -36,7 +35,7 @@ The system consists of **three key phases**:
 - Users submit **medical questions** via the front end, triggering **AWS API Gateway and AWS Lambda**.
 - The **Lambda function searches FAISS** for relevant question-answer pairs.
 - If no exact answer is found, the system retrieves **medical documents from S3 or external sources**.
-- The retrieved text is passed to **AWS SageMaker-hosted BioBERT**, which generates **an accurate, context-aware response** before returning it to the user.
+- The retrieved text is passed to **AWS SageMaker-hosted model**, which generates **an accurate, context-aware response** before returning it to the user.
 
 ### 3️⃣ **Front-End and Demo**
 - The system is **tested via Postman**.
@@ -92,7 +91,7 @@ The system consists of **three key phases**:
 
 - **Cloud Services**: AWS (S3, API Gateway, Lambda, SageMaker)
 - **Databases**: FAISS (Vector Database)
-- **Model**: BioBERT (Fine-tuned on MedQuAD)
+- **Model**: Sentence Transformer
 - **Frontend**: React.js
 - **Backend**: AWS Lambda with API Gateway
 - **Testing & Deployment**: Postman, AWS CloudWatch

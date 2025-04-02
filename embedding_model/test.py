@@ -60,15 +60,7 @@ def get_embedding(text):
     # Mean Pooling
     embedding_array = np.mean(embedding_array, axis=1)  # Shape: (1, 384)
 
-    # # Max Pooling
-    # max_pooled = np.max(embedding_array, axis=1)  # Shape: (1, 384)
-
-    # # Concatenate mean and max pooled vectors to get (1, 768)
-    # embedding_array = np.concatenate([mean_pooled, max_pooled], axis=1)
-
-    # # Debugging final shape
-    # print(f"Final embedding shape after pooling: {embedding_array.shape}")  # Should be (1, 768)
-
+  
     # Ensure shape matches FAISS index dimension
     if embedding_array.shape[1] != faiss_index.d:
         raise ValueError(f"Embedding dimension mismatch: Expected {faiss_index.d}, got {embedding_array.shape[1]}")
