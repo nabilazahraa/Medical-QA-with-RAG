@@ -4,7 +4,7 @@ from transformers import AutoTokenizer, AutoModelForCausalLM
 import time
 model_id = "meta-llama/Llama-3.2-1B"
 
-token = "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"  # Your token from Hugging Face
+
 
 start = time.time()
 tokenizer = AutoTokenizer.from_pretrained(model_id, token=token)
