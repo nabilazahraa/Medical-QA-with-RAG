@@ -5,10 +5,10 @@ import numpy as np
 import tempfile
 
 # AWS S3 and SageMaker Configuration
-S3_BUCKET_NAME = "med-qa-json"
-FAISS_INDEX_KEY = "tmp/faiss_index_384.bin"
-FAISS_METADATA_KEY = "tmp/faiss_metadata.json"
-SAGEMAKER_ENDPOINT = "sentence-transformer-endpoint"
+S3_BUCKET_NAME = "medgpt-qa"
+FAISS_INDEX_KEY = "qa-embedding/faiss_index_384.bin"
+FAISS_METADATA_KEY = "qa-embedding/faiss_metadata.json"
+SAGEMAKER_ENDPOINT = "sentence-transformers-all-MiniLM-L6-v2-2025-04-04-10-52-04-531"
 
 # AWS Clients
 s3_client = boto3.client("s3")

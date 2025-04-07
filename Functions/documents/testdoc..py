@@ -7,11 +7,12 @@ import time
 from transformers import AutoTokenizer
 
 # ---------------------- CONFIG ---------------------- #
-S3_BUCKET_NAME = "med-qa-docs"
-FAISS_FOLDER = "tmp"  # Folder in S3
+S3_BUCKET_NAME = "medgpt-qa"
+FAISS_FOLDER = "faiss-embedding"  # Folder in S3
+# s3://medgpt-qa/faiss-embedding/
 FAISS_INDEX_KEY = f"{FAISS_FOLDER}/faiss_doc_index_384.bin"
 FAISS_METADATA_KEY = f"{FAISS_FOLDER}/faiss_doc_metadata.json"
-SAGEMAKER_ENDPOINT = "sentence-transformer-endpoint"
+SAGEMAKER_ENDPOINT = "sentence-transformers-all-MiniLM-L6-v2-2025-04-04-10-52-04-531"
 # ---------------------------------------------------- #
 
 # AWS Clients
@@ -100,25 +101,25 @@ def search_faiss(query, top_k=5, expand_neighbors=True, neighbor_window=1):
         })
 
         # Expand to nearby chunks
-        if expand_neighbors:
-            for offset in range(-neighbor_window, neighbor_window + 1):
-                neighbor_id = chunk_id + offset
-                if offset == 0 or neighbor_id < 0:
-                    continue
+        # if expand_neighbors:
+        #     for offset in range(-neighbor_window, neighbor_window + 1):
+        #         neighbor_id = chunk_id + offset
+        #         if offset == 0 or neighbor_id < 0:
+        #             continue
 
-                for i, m in enumerate(metadata):
-                    if m.get("source") == doc_id and m.get("chunk_id") == neighbor_id:
-                        key = (doc_id, neighbor_id)
-                        if key in seen:
-                            continue
-                        seen.add(key)
-                        results.append({
-                            "rank": len(results) + 1,
-                            "score": None,  # not FAISS-ranked
-                            "source": doc_id,
-                            "chunk_id": neighbor_id,
-                            "text": m.get("text")
-                        })
+        #         for i, m in enumerate(metadata):
+        #             if m.get("source") == doc_id and m.get("chunk_id") == neighbor_id:
+        #                 key = (doc_id, neighbor_id)
+        #                 if key in seen:
+        #                     continue
+        #                 seen.add(key)
+        #                 results.append({
+        #                     "rank": len(results) + 1,
+        #                     "score": None,  # not FAISS-ranked
+        #                     "source": doc_id,
+        #                     "chunk_id": neighbor_id,
+        #                     "text": m.get("text")
+        #                 })
 
     return results
 
@@ -133,3 +134,5 @@ if __name__ == "__main__":
         print(f"Chunk ID: {result['chunk_id']}")
         # print(f"Score: {result['score']:.4f}")
         print(f"Text:\n{result['text']}...")  # Limit preview to 500 chars
+
+

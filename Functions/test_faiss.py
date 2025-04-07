@@ -6,8 +6,8 @@ import json
 
 torch.set_num_threads(1)
 
-index = faiss.read_index("faiss embeddings/faiss_index.bin")
-with open("faiss embeddings/faiss_metadata.json", "r") as f:
+index = faiss.read_index("faiss embeddings/qa/faiss_index_384.bin")
+with open("faiss embeddings/qa/faiss_metadata.json", "r") as f:
     metadata = json.load(f)
 
 tokenizer = AutoTokenizer.from_pretrained("dmis-lab/biobert-base-cased-v1.1")
@@ -40,7 +40,7 @@ def search_faiss(query, top_k=1):
 
 # Example Query
 query = "What are the symptoms of Adult Acute Lymphoblastic Leukemia "
-results = search_faiss(query, top_k=3)
+results = search_faiss(query, top_k=5)
 
 # Print Results
 for i, res in enumerate(results):
