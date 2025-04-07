@@ -12,6 +12,9 @@ import tempfile
 from sentence_transformers import CrossEncoder, SentenceTransformer 
 from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline
 
+import os
+os.environ["TRANSFORMERS_NO_TF"] = "1"
+
 # AWS Config
 S3_BUCKET_NAME = "medgpt-qa"
 FAISS_FOLDER = "faiss-embedding"
