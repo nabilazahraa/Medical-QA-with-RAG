@@ -5,8 +5,6 @@ import time
 import tempfile
 import numpy as np
 import faiss
-import boto3
-
 from fastapi import FastAPI
 from pydantic import BaseModel
 from sentence_transformers import CrossEncoder, SentenceTransformer
@@ -101,18 +99,34 @@ def generate_answer(question, context, model, tokenizer):
         f"<|user|>Context:\n{context}\n\nQuestion: {question}<|end|>\n"
         f"<|assistant|>The answer is:"
     )
-
-    generator = pipeline("text-generation", model=model, tokenizer=tokenizer)
+   
+    # generator = pipeline("text-generation", model=model, tokenizer=tokenizer)
     response = generator(
         prompt,
         max_new_tokens=200,
         temperature=0.7,
-        do_sample=True,
+        do_sample=False,
         top_p=0.9,
-        top_k=40
+        top_k=40,
+        return_full_text=False 
     )
-    parts = response[0]["generated_text"].split("<|assistant|>The answer is: ")
-    print("\nAnswer:\n", response[0]["generated_text"])
+    generated = response[0]["generated_text"].strip()
+
+    # Check if the answer ends mid-sentence and try to complete it
+    if not generated.endswith((".", "!", "?", "\"", "\n")):
+        extended_response = generator(
+            prompt + generated,
+            max_new_tokens=100,
+            # temperature=0.7,
+            # do_sample=False,
+            # top_p=0.9,
+            # top_k=40,
+            return_full_text=False
+        )
+        generated += " " + extended_response[0]["generated_text"].strip()
+
+    parts = generated.split("<|assistant|>The answer is: ")
+    print("\nAnswer:\n", parts)
     return parts[1].strip() if len(parts) > 1 else "Could not extract answer"
 
 
@@ -124,9 +138,12 @@ bi_encoder = SentenceTransformer(BI_ENCODER_LOCAL)
 cross_encoder = CrossEncoder(CROSS_ENCODER_MODEL)
 print("Models loaded.")
 print("Loading tokenizer and model...")
+# Load once at startup
 tokenizer = AutoTokenizer.from_pretrained("TinyLlama/TinyLlama-1.1B-Chat-v1.0")
 print("Loading TinyLlama model...")
 model = AutoModelForCausalLM.from_pretrained("TinyLlama/TinyLlama-1.1B-Chat-v1.0")
+
+generator = pipeline("text-generation", model=model, tokenizer=tokenizer)
 print("TinyLlama model loaded.")
 
 # ------------------ API Endpoint ------------------
