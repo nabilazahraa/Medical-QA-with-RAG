@@ -93,6 +93,24 @@ def search_faiss(query, faiss_index, metadata, bi_encoder, cross_encoder, top_k=
     return rerank_local(query, results, cross_encoder, top_n=rerank_top_k)
 
 
+import re
+
+def clean_answer(text):
+    # Truncate if the answer ends mid-sentence (no punctuation at end)
+    text = text.strip()
+    
+    # Split by sentence-ending punctuation
+    sentences = re.split(r'(?<=[.!?]) +', text)
+    
+    if sentences:
+        # Return all complete sentences that end with proper punctuation
+        cleaned = ' '.join([s for s in sentences if re.search(r'[.!?]$', s)])
+        if cleaned:
+            return cleaned.strip()
+    
+    # Fallback: return the first complete sentence if nothing matches
+    return sentences[0].strip() if sentences else "Answer not available."
+
 def generate_answer(question, context, model, tokenizer):
     prompt = (
         "<|system|>You are a helpful and knowledgeable medical assistant.<|end|>\n"
@@ -100,35 +118,22 @@ def generate_answer(question, context, model, tokenizer):
         f"<|assistant|>The answer is:"
     )
    
-    # generator = pipeline("text-generation", model=model, tokenizer=tokenizer)
     response = generator(
         prompt,
-        max_new_tokens=200,
+        max_new_tokens=120,
         temperature=0.7,
-        do_sample=False,
+        do_sample=True,
         top_p=0.9,
-        top_k=40,
-        return_full_text=False 
+        top_k=40
+
     )
-    generated = response[0]["generated_text"].strip()
+    parts = response[0]["generated_text"].split("<|assistant|>The answer is: ")
+    print("\nAnswer:\n", response[0]["generated_text"])
 
-    # Check if the answer ends mid-sentence and try to complete it
-    if not generated.endswith((".", "!", "?", "\"", "\n")):
-        extended_response = generator(
-            prompt + generated,
-            max_new_tokens=100,
-            # temperature=0.7,
-            # do_sample=False,
-            # top_p=0.9,
-            # top_k=40,
-            return_full_text=False
-        )
-        generated += " " + extended_response[0]["generated_text"].strip()
-
-    parts = generated.split("<|assistant|>The answer is: ")
-    print("\nAnswer:\n", parts)
-    return parts[1].strip() if len(parts) > 1 else "Could not extract answer"
-
+    if len(parts) > 1:
+        raw_answer = parts[1].strip()
+        return clean_answer(raw_answer)
+    return "Could not extract answer."
 
 # Load models and data once at startup
 print("Initializing models and index...")
