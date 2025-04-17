@@ -5,7 +5,6 @@
 # import tempfile
 # import numpy as np
 # import faiss
-# import boto3
 
 # from fastapi import FastAPI
 # from pydantic import BaseModel
@@ -18,13 +17,11 @@
 # # Config
 # S3_BUCKET_NAME = "medgpt-qa"
 # # FAISS_FOLDER = "faiss-embedding"
-# FAISS_INDEX_KEY = "qa-embedding/faiss_index_384.bin"
-# FAISS_METADATA_KEY = "qa-embedding/faiss_metadata.json"
+# FAISS_INDEX_PATH= "qa/faiss_index_384.bin"
+# FAISS_METADATA_PATH = "qa/faiss_metadata.json"
 # BI_ENCODER_LOCAL = "sentence-transformers/all-MiniLM-L6-v2"
 # CROSS_ENCODER_MODEL = "cross-encoder/ms-marco-MiniLM-L-6-v2"
 
-# # AWS clients
-# s3_client = boto3.client("s3")
 
 # # FastAPI app
 # app = FastAPI()
@@ -40,17 +37,16 @@
 # # ------------------ Loading at startup ------------------
 
 # def load_faiss():
-#     obj = s3_client.get_object(Bucket=S3_BUCKET_NAME, Key=FAISS_INDEX_KEY)
-#     data = obj["Body"].read()
-#     with tempfile.NamedTemporaryFile(delete=False) as f:
-#         f.write(data)
-#         path = f.name
-#     index = faiss.read_index(path)
-#     os.remove(path)
+#     if not os.path.exists(FAISS_INDEX_PATH):
+#         raise FileNotFoundError(f"FAISS index file not found at {FAISS_INDEX_PATH}")
+#     if not os.path.exists(FAISS_METADATA_PATH):
+#         raise FileNotFoundError(f"Metadata file not found at {FAISS_METADATA_PATH}")
 
-#     obj = s3_client.get_object(Bucket=S3_BUCKET_NAME, Key=FAISS_METADATA_KEY)
-#     meta = json.loads(obj["Body"].read().decode("utf-8"))
-#     print("FAISS index and metadata loaded.")
+#     index = faiss.read_index(FAISS_INDEX_PATH)
+#     with open(FAISS_METADATA_PATH, "r", encoding="utf-8") as f:
+#         meta = json.load(f)
+
+#     print("FAISS index and metadata loaded from local files.")
 #     return index, meta
 
 
@@ -75,7 +71,7 @@
 #     sorted_hits = sorted(candidates, key=lambda x: x["rerank_score"], reverse=True)
 #     return sorted_hits if top_n is None else sorted_hits[:top_n]
 
-# def search_faiss(query, top_k=10, rerank_top_k=5, use_local_bi_encoder=False):
+# def search_faiss(query, top_k=10, rerank_top_k=5):
 #     """
 #     1) Retrieve top_k with FAISS (using either SageMaker or local bi‑encoder),
 #     2) rerank the top rerank_top_k locally with CrossEncoder,
@@ -83,7 +79,7 @@
 #     """
 #     # 1) embed query
 #     # if use_local_bi_encoder:
-#     q_emb = get_embedding(query)
+#     q_emb = get_embedding(query, bi_encoder)
 #     # else:
 #     #     # fallback to SageMaker endpoint
 #     #     payload = {"inputs": query}
@@ -124,11 +120,11 @@
 #     generator = pipeline("text-generation", model=model, tokenizer=tokenizer)
 #     response = generator(
 #         prompt,
-#         max_new_tokens=500,
-#         temperature=0.7,
-#         do_sample=True,
-#         top_p=0.9,
-#         top_k=40
+#         max_new_tokens=120,
+#         # temperature=0.7,
+#         # do_sample=True,
+#         # top_p=0.9,
+#         # top_k=40
 #     )
 #     parts = response[0]["generated_text"].split("<|assistant|>The answer is: ")
 #     print("\nAnswer:\n", response[0]["generated_text"])
@@ -158,8 +154,8 @@
 # def ask(request: AskRequest):
 #     start = time.time()
 
-#     results = search_faiss(request.question, faiss_index, metadata, bi_encoder, cross_encoder)
-#     context_chunks = [res["text"] for res in results]
+#     results = search_faiss(request.question)
+#     context_chunks = [res["answer"] for res in results]
 #     context = "\n\n".join(context_chunks[:3])
 
 #     answer = generate_answer(request.question, context, model, tokenizer)

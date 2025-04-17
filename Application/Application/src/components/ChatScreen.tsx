@@ -448,24 +448,9 @@ const ChatScreen = () => {
     }
   };
 
-  // const typeOutAnswer = (finalText: string) => {
-  //   let currentIndex = 0;
-  //   const interval = setInterval(() => {
-  //     currentIndex++;
-  //     setMessages((prev) => {
-  //       const newMessages = [...prev];
-  //       // Update the last message (bot's message) with substring of answer
-  //       newMessages[newMessages.length - 1] = {
-  //         role: "bot",
-  //         text: finalText.substring(0, currentIndex),
-  //       };
-  //       return newMessages;
-  //     });
-  //     if (currentIndex >= finalText.length) clearInterval(interval);
-  //   }, 50);
-  // };
+
   const typeOutAnswer = (finalText: string) => {
-    setIsTyping(true); // Start typing indicator
+    // setIsTyping(true); // Start typing indicator
     let currentIndex = 0;
     const interval = setInterval(() => {
       currentIndex++;
@@ -479,7 +464,7 @@ const ChatScreen = () => {
       });
       if (currentIndex >= finalText.length) {
         clearInterval(interval);
-        setIsTyping(false); // move this here so typing indicator disappears after answer fully typed
+        // setIsTyping(false); // move this here so typing indicator disappears after answer fully typed
       }
     }, 15); // faster typing (was 50)
   };
@@ -495,9 +480,9 @@ const ChatScreen = () => {
   
     // Add "Thinking..." placeholder before calling the API
     setMessages((prev) => [...prev, { role: "bot", text: "Thinking..." }]);
-    // setIsTyping(true);
+    setIsTyping(true);
     const answer = await sendQuestionToAPI(question);
-    // setIsTyping(false);
+    setIsTyping(false);
   
     // Replace "Thinking..." with an empty bot message before typing
     setMessages((prev) => {
@@ -509,18 +494,7 @@ const ChatScreen = () => {
     typeOutAnswer(answer);
   };
   
-  // // On mount, if there's an initial query, send it automatically
-  // useEffect(() => {
-  //   if (initialQuery) {
-  //     setIsTyping(true);
-  //     setMessages((prev) => [...prev, { role: "bot", text: "" }]);
-  //     (async () => {
-  //       const answer = await sendQuestionToAPI(initialQuery);
-  //       setIsTyping(false);
-  //       typeOutAnswer(answer);
-  //     })();
-  //   }
-  // }, [initialQuery]);
+ 
 
   return (
     <div
@@ -554,7 +528,7 @@ const ChatScreen = () => {
           ))}
           {isTyping && (
             <div className="text-left text-sm text-gray-500 animate-pulse px-4">
-              MedGPT is typing...
+              MedGPT is thinking...
             </div>
           )}
         </div>
