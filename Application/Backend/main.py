@@ -110,6 +110,17 @@ def clean_answer(text):
     
     # Fallback: return the first complete sentence if nothing matches
     return sentences[0].strip() if sentences else "Answer not available."
+SMALL_TALK_RESPONSES = {
+    "hello": "Hi there! How can I assist you today?",
+    "hi": "Hello! Feel free to ask any medical question.",
+    "what can you do": "I can help answer medical questions based on reliable documents.",
+    "who are you": "I’m MedGPT, your AI medical assistant.",
+    "how are you": "I'm just code, but I'm working perfectly. How can I help you?",
+}
+
+def is_small_talk(text):
+    normalized = text.lower().strip()
+    return next((resp for key, resp in SMALL_TALK_RESPONSES.items() if key in normalized), None)
 
 def generate_answer(question, context, model, tokenizer):
     prompt = (
@@ -160,6 +171,13 @@ class AskRequest(BaseModel):
 @app.post("/ask")
 def ask(request: AskRequest):
     start = time.time()
+    casual_response = is_small_talk(request.question)
+    if casual_response:
+        return {
+            "question": request.question,
+            "answer": casual_response,
+            "time_taken": round(time.time() - start, 2)
+        }
 
     results = search_faiss(request.question, faiss_index, metadata, bi_encoder, cross_encoder)
     context_chunks = [res["text"] for res in results]
