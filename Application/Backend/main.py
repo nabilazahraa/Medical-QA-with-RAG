@@ -11,20 +11,18 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 from sentence_transformers import CrossEncoder, SentenceTransformer
 from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline
-from fastapi.middleware.cors import CORSMiddleware  # <-- add this
+from fastapi.middleware.cors import CORSMiddleware  
 
 os.environ["OMP_NUM_THREADS"] = "1"
 os.environ["MKL_NUM_THREADS"] = "1"
 # Config
 S3_BUCKET_NAME = "medgpt-qa"
-FAISS_FOLDER = "faiss-embedding"
-FAISS_INDEX_KEY = f"{FAISS_FOLDER}/faiss_doc_index_384.bin"
-FAISS_METADATA_KEY = f"{FAISS_FOLDER}/faiss_doc_metadata.json"
+# FAISS_FOLDER = "faiss-embedding"
+FAISS_INDEX_PATH = "doc/faiss_doc_index_384.bin"
+FAISS_METADATA_PATH = "doc/faiss_doc_metadata.json"
 BI_ENCODER_LOCAL = "sentence-transformers/all-MiniLM-L6-v2"
 CROSS_ENCODER_MODEL = "cross-encoder/ms-marco-MiniLM-L-6-v2"
 
-# AWS clients
-s3_client = boto3.client("s3")
 
 # FastAPI app
 app = FastAPI()
@@ -40,17 +38,16 @@ app.add_middleware(
 # ------------------ Loading at startup ------------------
 
 def load_faiss():
-    obj = s3_client.get_object(Bucket=S3_BUCKET_NAME, Key=FAISS_INDEX_KEY)
-    data = obj["Body"].read()
-    with tempfile.NamedTemporaryFile(delete=False) as f:
-        f.write(data)
-        path = f.name
-    index = faiss.read_index(path)
-    os.remove(path)
+    if not os.path.exists(FAISS_INDEX_PATH):
+        raise FileNotFoundError(f"FAISS index file not found at {FAISS_INDEX_PATH}")
+    if not os.path.exists(FAISS_METADATA_PATH):
+        raise FileNotFoundError(f"Metadata file not found at {FAISS_METADATA_PATH}")
 
-    obj = s3_client.get_object(Bucket=S3_BUCKET_NAME, Key=FAISS_METADATA_KEY)
-    meta = json.loads(obj["Body"].read().decode("utf-8"))
-    print("FAISS index and metadata loaded.")
+    index = faiss.read_index(FAISS_INDEX_PATH)
+    with open(FAISS_METADATA_PATH, "r", encoding="utf-8") as f:
+        meta = json.load(f)
+
+    print("FAISS index and metadata loaded from local files.")
     return index, meta
 
 
