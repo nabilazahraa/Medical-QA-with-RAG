@@ -1,0 +1,22 @@
+<rail version="0.1">
+  <input>
+    <prompt>
+      Only answer the user's question if it is related to the medical domain.
+      If it's not, say "Sorry, I can only assist with medical-related questions."
+
+      Question: {{question}}
+    </prompt>
+  </input>
+
+  <output>
+    <string name="answer"
+            description="Answer to the medical question. If the question is not medical, return a polite refusal."
+            on_fail="reask" />
+  </output>
+
+  <prompt>
+    <format>
+      {{answer}}
+    </format>
+  </prompt>
+</rail>
