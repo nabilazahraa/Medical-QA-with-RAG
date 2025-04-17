@@ -16,7 +16,6 @@ const ChatScreen = () => {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
-  const [lastResponseTime, setLastResponseTime] = useState<string | null>(null);
 
 
   // const sendQuestionToAPI = async (question: string) => {
@@ -36,6 +35,7 @@ const ChatScreen = () => {
   //     setLoading(false);
   //   }
   // };
+
   const sendQuestionToAPI = async (question: string) => {
     setLoading(true);
     try {
@@ -55,7 +55,6 @@ const ChatScreen = () => {
   };
   
 
-
   const typeOutAnswer = (finalText: string) => {
     // setIsTyping(true); // Start typing indicator
     let currentIndex = 0;
@@ -73,7 +72,7 @@ const ChatScreen = () => {
         clearInterval(interval);
         // setIsTyping(false); // move this here so typing indicator disappears after answer fully typed
       }
-    }, 15); // faster typing (was 50)
+    }, 20); // faster typing (was 50)
   };
   
  
@@ -100,6 +99,7 @@ const ChatScreen = () => {
   
   //   typeOutAnswer(answer);
   // };
+  
   const handleSend = async () => {
     if (!input.trim()) return;
     const question = input.trim();
@@ -112,7 +112,6 @@ const ChatScreen = () => {
     
     const { answer, timeTaken } = await sendQuestionToAPI(question);
     setIsTyping(false);
-    setLastResponseTime(timeTaken); // Save the time taken
   
     setMessages((prev) => {
       const updated = [...prev];
@@ -151,17 +150,8 @@ const ChatScreen = () => {
                     : "bg-white/10 text-white mr-auto inline-block"
                 }`}
               >
-                {/* {msg.text} */}
-                <div>
-    {msg.text}
-    {msg.role === "bot" && index === messages.length - 1 && lastResponseTime && (
-      <div className="text-xs text-gray-400 mt-1">
-        Response time: {lastResponseTime} seconds
-      </div>
-    )}
-  </div>
+                {msg.text}
               </div>
-             
             </div>
           ))}
           {isTyping && (
