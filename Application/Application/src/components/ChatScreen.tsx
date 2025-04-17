@@ -432,7 +432,7 @@ const ChatScreen = () => {
   const sendQuestionToAPI = async (question: string) => {
     setLoading(true);
     try {
-      const res = await fetch("http://127.0.0.1:9000/ask", {
+      const res = await fetch("http://127.0.0.1:8000/ask", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ question }),
@@ -474,7 +474,7 @@ const ChatScreen = () => {
     setInput("");
   
     // Add "Thinking..." placeholder before calling the API
-    setMessages((prev) => [...prev, { role: "bot", text: "Thinking..." }]);
+    setMessages((prev) => [...prev, { role: "bot", text: "..." }]);
     setIsTyping(true);
     const answer = await sendQuestionToAPI(question);
     setIsTyping(false);
@@ -506,7 +506,7 @@ const ChatScreen = () => {
     <div
       className="fixed inset-0 bg-cover bg-center bg-no-repeat flex flex-col justify-center items-center text-white text-center px-4"
       style={{ 
-        backgroundImage: `url('/bg.png')`,
+        backgroundImage: `url('/img.avif')`,
         paddingTop: "64px" // Adjust this value to match your header height
       }}
     >
