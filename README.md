@@ -1,113 +1,110 @@
-# Real-Time Medical Question-Answering with Retrieval-Augmented Generation on AWS
+# Real-Time Medical Question-Answering with Retrieval-Augmented Generation
 
 ## 🔬 Project Overview
 
-In the healthcare sector, timely access to accurate medical knowledge is critical for informed decision-making. This project aims to develop a **real-time medical document Question-Answering (QA) system** leveraging AWS cloud services for **scalable, low-latency information retrieval**. 
+In the healthcare sector, timely access to accurate medical knowledge is essential. This project develops a **real-time medical QA system** that combines **semantic search with reranking**, **large language models**, and **content safety mechanisms** to provide **precise, medically-grounded answers** to user questions.
 
-By integrating a **vector database for document embedding retrieval** and a **large language model for contextual Q&A**, we aim to provide **precise and instant responses** to medical queries. Our system will focus on **disease-related questions**, ensuring rapid and accurate access to key healthcare information.
+The system is optimized for disease-related queries and leverages **Retrieval-Augmented Generation (RAG)**, combining fast document search using **FAISS** and **semantic reranking**, followed by **contextual answer generation** using a **Together-hosted LLM** (`Llama-3.3-70B-Instruct-Turbo-Free`). It also integrates **Gemini and Azure Content Safety** to ensure safe and domain-relevant responses.
 
 ---
 
 ## 📚 Dataset
 
-We will utilize **MedQuAD**, a publicly available medical Q&A dataset containing **12,723 QA pairs** sourced from reputable organizations such as **NIH, NCI, and the Genetic and Rare Diseases Information Center**. 
+We use structured medical QA datasets such as **MedQuAD** and **CancerGov**, which contain thousands of question-answer pairs across:
 
-The dataset covers:
-- Disease diagnosis
-- Treatments
-- Drug interactions
-- Genetic conditions
+- Disease types and diagnosis  
+- Treatments and procedures  
+- Drug interactions  
+- Rare and genetic conditions  
 
-
----
-
-## 🚀 Proposed Pipeline and AWS Implementation
-
-The system consists of **three key phases**:
-
-### 1️⃣ **Document Ingestion and Preprocessing**
-- Medical documents and XML files are stored in **Amazon S3** for structured storage.
-- **XML parsing** extracts questions, answers, and URLs.
-- External medical documents from dataset URLs are fetched and preprocessed.
-- Text is converted into **embeddings using FAISS** for efficient retrieval.
-
-### 2️⃣ **Real-Time Query Processing**
-- Users submit **medical questions** via the front end, triggering **AWS API Gateway and AWS Lambda**.
-- The **Lambda function searches FAISS** for relevant question-answer pairs.
-- If no exact answer is found, the system retrieves **medical documents from S3 or external sources**.
-- The retrieved text is passed to **AWS SageMaker-hosted model**, which generates **an accurate, context-aware response** before returning it to the user.
-
-### 3️⃣ **Front-End and Demo**
-- The system is **tested via Postman**.
-- A **React-based front end** allows users to interact with the system.
-- **API Gateway ensures real-time performance validation**.
-- A **live demo** will showcase:
-  - Query processing flow
-  - Retrieval from MedQuAD and external documents
-  - LLM-generated answers
-  - Performance metrics tracking
+Each document is embedded and stored using **FAISS**, and metadata is preserved for retrieval traceability.
 
 ---
 
-## 📊 Performance Metrics & Evaluation
+## ⚙️ System Pipeline
 
-| Metric  | Description | Baseline/Target |
-|---------|------------|----------------|
-| **NDCG (Normalized Discounted Cumulative Gain)** | Measures the ranking relevance of retrieved medical documents | **0.65** |
-| **MRR (Mean Reciprocal Rank)** | Evaluates correctness of top-ranked answers | **0.7** |
-| **Latency** | Goal is to achieve a sub-second response time | **≤ 1.0 s** |
-| **BLEU Score** | Assesses answer fluency and accuracy | **Target: 0.55+** |
+### 1️⃣ Document Indexing & Preprocessing
+
+- Medical XML datasets are parsed and stored in **Amazon S3**
+- Each chunk is embedded using a **bi-encoder (`all-MiniLM-L6-v2`)** and indexed with **FAISS**
+- Metadata is saved as a parallel JSON file
+- The FAISS index and metadata are loaded at runtime
+
+### 2️⃣ Real-Time Query Flow
+
+- Users send queries to the **FastAPI backend**
+- System detects **small talk** and **non-medical queries** using **Gemini classification**
+- For valid medical queries:
+  - Bi-encoder retrieves top chunks from FAISS
+  - Reranked using **cross-encoder (`ms-marco-MiniLM-L-6-v2`)**
+  - Top chunks are passed to Together-hosted **LLM (LLaMA-3.3 70B)** for answer generation
+  - Response is **content-validated via Azure Content Safety SDK**
+- Clean, domain-relevant answers are returned
+
+### 3️⃣ Front-End Integration
+
+- Integrated with a **React.js frontend** supporting real-time interaction
+- Response time and source tracking enabled
+- Supports loading indicators, statistics, and rerouting for cluster-based workflows
 
 ---
 
-<!-- ## ⏳ Proposed Schedule and Milestones
+## 🔒 Safety and Relevance Filters
 
-| Week | Phase | Milestone |
-|------|-------|-----------|
-| **1-3**  | Phase 1 | Initial Setup and Dataset Integration |
-| **4-6**  | Phase 2 | Query Processing and API Development |
-| **7-9**  | Phase 3 | Front-End Development and Real-Time Testing |
-| **10-12** | Phase 4 | Performance Evaluation, Optimization | -->
+To ensure safety and relevance:
+
+- **Gemini** detects and responds to small talk  
+- **Gemini** filters out **non-medical questions**  
+- **Azure Content Safety** checks final responses against categories:
+  - Hate
+  - Sexual
+  - Self-harm
+  - Violence
 
 ---
 
-## 📅 Progress Updates
+## 📊 Evaluation Metrics
 
-| Week | Task | Status | Notes |
-|------|------|--------|-------|
-| Week 8  | Initial Dataset Integration | Complete | Cleaning and preprocessing MedQuAD dataset |
-| Week 9  | FAISS/Pinecone Setup | Completed | Successfully indexed dataset embeddings |
-| Week 10 | Extract text from documents | Completed | Extracting structured text from urls |
-| Week 10 | Query Processing API | Completed | Implementing Lambda-based retrieval |
-| Week 11 | LLM Integration | In Progress | Answer generation |
-| Week 11 | Front-End Development | In Progress | React UI implementation in pipeline |
+| Metric        | Description                                    | Target    |
+|---------------|------------------------------------------------|-----------|
+| **NDCG**      | Ranking relevance of retrieved content         | ≥ 0.65    |
+| **MRR**       | Correctness of top-ranked retrieval            | ≥ 0.70    |
+| **BLEU Score**| Fluency and answer overlap with references     | ≥ 0.55    |
+| **Latency**   | Sub-second real-time performance               | ≤ 1.0 sec |
 
+---
 
-*(The table will be updated as progress is made)*
+## 📅 Progress Tracker
+
+| Week  | Task                          | Status     | Notes                                  |
+|-------|-------------------------------|------------|----------------------------------------|
+| Week 8  | Dataset Parsing & Cleaning     | ✅ Complete | MedQuAD and CancerGov parsed           |
+| Week 9  | FAISS + Metadata Upload        | ✅ Complete | Indexed on AWS S3                      |
+| Week 10 | Backend Setup                  | ✅ Complete | Search + reranking + LLM API           |
+| Week 11 | Gemini + Azure Content Filters | ✅ Complete | Integrated for QA safety               |
+| Week 11 | Front-End Integration          | ✅ Complete | React-based chat interface             |
+| Week 12 | Testing                        | ✅ Complete | Evaluation metrics                     |
 
 ---
 
 ## 🛠 Tech Stack
 
-- **Cloud Services**: AWS (S3, API Gateway, Lambda, SageMaker)
-- **Databases**: FAISS (Vector Database)
-- **Model**: Sentence Transformer
-- **Frontend**: React.js
-- **Backend**: AWS Lambda with API Gateway
-- **Testing & Deployment**: Postman, AWS CloudWatch
+- **Backend**: FastAPI, FAISS, SentenceTransformers, Transformers  
+- **LLMs**: LLaMA-3.3-70B (via Together), Gemini (Google GenAI)  
+- **Cloud Services**: Amazon S3, Boto3 
+- **Safety Checks**: Azure Content Safety SDK, Gemini prompt-based classifier  
+- **Frontend**: React.js  
+- **Middleware**: CORS, real-time routing via REST  
 
 ---
 
 ## 📢 Contributors
 
-👩‍💻 **Nabila Zahra** (nz07162)  
-👩‍💻 **Hareem Siraj** (hs07488)
+- **Nabila Zahra**  
+- **Hareem Siraj**
 
 ---
 
 ## 📜 License
 
-This project is open-source under the **MIT License**. 
-
----
-
+This project is open-source under the **MIT License**.
