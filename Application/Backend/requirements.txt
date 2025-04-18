@@ -1,0 +1,32 @@
+# FastAPI and ASGI server
+fastapi==0.110.1
+uvicorn[standard]==0.29.0
+
+# NLP Models
+sentence-transformers==2.2.2
+transformers==4.39.3
+torch>=2.1.0
+
+# FAISS
+faiss-cpu==1.7.4
+
+# Azure Content Safety
+azure-ai-contentsafety==1.0.0b1
+azure-core==1.30.1
+
+# Google Generative AI (Gemini)
+google-generativeai==0.3.2
+
+# OpenAI (for Together API)
+openai==1.18.0
+
+# AWS SDK for Python
+boto3==1.34.72
+
+# Utility Libraries
+requests==2.31.0
+pydantic==1.10.13
+numpy==1.26.4
+
+# For .env management if needed later
+python-dotenv==1.0.1

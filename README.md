@@ -8,7 +8,7 @@ The system is optimized for disease-related queries and leverages **Retrieval-Au
 
 ---
 
-## 📚 Dataset
+## Dataset
 
 We use structured medical QA datasets such as **MedQuAD** and **CancerGov**, which contain thousands of question-answer pairs across:
 
@@ -21,16 +21,16 @@ Each document is embedded and stored using **FAISS**, and metadata is preserved 
 
 ---
 
-## ⚙️ System Pipeline
+## System Pipeline
 
-### 1️⃣ Document Indexing & Preprocessing
+### 1. Document Indexing & Preprocessing
 
 - Medical XML datasets are parsed and stored in **Amazon S3**
 - Each chunk is embedded using a **bi-encoder (`all-MiniLM-L6-v2`)** and indexed with **FAISS**
 - Metadata is saved as a parallel JSON file
 - The FAISS index and metadata are loaded at runtime
 
-### 2️⃣ Real-Time Query Flow
+### 2. Real-Time Query Flow
 
 - Users send queries to the **FastAPI backend**
 - System detects **small talk** and **non-medical queries** using **Gemini classification**
@@ -41,7 +41,7 @@ Each document is embedded and stored using **FAISS**, and metadata is preserved 
   - Response is **content-validated via Azure Content Safety SDK**
 - Clean, domain-relevant answers are returned
 
-### 3️⃣ Front-End Integration
+### 3. Front-End Integration
 
 - Integrated with a **React.js frontend** supporting real-time interaction
 - Response time and source tracking enabled
@@ -63,7 +63,7 @@ To ensure safety and relevance:
 
 ---
 
-## 📊 Evaluation Metrics
+## Evaluation Metrics
 
 | Metric        | Description                                    | Target    |
 |---------------|------------------------------------------------|-----------|
@@ -74,7 +74,7 @@ To ensure safety and relevance:
 
 ---
 
-## 📅 Progress Tracker
+## Progress Update
 
 | Week  | Task                          | Status     | Notes                                  |
 |-------|-------------------------------|------------|----------------------------------------|
@@ -87,7 +87,7 @@ To ensure safety and relevance:
 
 ---
 
-## 🛠 Tech Stack
+## Tech Stack
 
 - **Backend**: FastAPI, FAISS, SentenceTransformers, Transformers  
 - **LLMs**: LLaMA-3.3-70B (via Together), Gemini (Google GenAI)  
@@ -97,6 +97,94 @@ To ensure safety and relevance:
 - **Middleware**: CORS, real-time routing via REST  
 
 ---
+## Ethical Impact
+
+The development and deployment of a real-time medical question-answering system carry significant ethical responsibilities. Below are key considerations addressed in the design of our system:
+
+### 1. **Accuracy and Reliability**
+Providing incorrect or misleading medical advice can have serious consequences. Our system mitigates this risk by:
+- Relying exclusively on curated and authoritative datasets (MedQuAD)
+- Implementing Retrieval-Augmented Generation (RAG) to ground responses in real documents
+- Ensuring hallucination control by instructing the model to answer strictly from context
+
+### 2. **Content Safety**
+Given the sensitivity of health-related topics, all generated content is:
+- Screened using **Azure Content Safety** to detect hate speech, self-harm, violence, or sexually inappropriate material
+- Further filtered for domain relevance using **Gemini’s classification**, ensuring off-topic or casual queries receive appropriate, polite redirection
+
+### 3. **Privacy and Data Handling**
+- Our system does **not store user queries** or any identifying data, preserving user privacy
+- The system processes text input only for real-time inference without logging or profiling users
+
+### 6. **Transparency**
+- The system discloses its sources for each answer to maintain **traceability and trust**
+- Users are informed when the system is unable to confidently answer a question due to insufficient context
+
+---
+## Evaluation Results
+
+The performance of the medical QA system was evaluated using standard information retrieval and generation metrics. The results are as follows:
+
+| **Metric**         | **Result**     |
+|--------------------|----------------|
+| **MRR** (Mean Reciprocal Rank) | 0.86           |
+| **NDCG** (Normalized Discounted Cumulative Gain) | 0.71           |
+| **BLEU Score**     | 0.0082         |
+| **Average Latency** (per query) | 4.41 seconds   |
+
+- **High MRR and NDCG** indicate that relevant context chunks were effectively retrieved and ranked at the top positions.
+- **Low BLEU** is expected due to the open-ended nature of medical QA where lexical overlap is low; semantic relevance is prioritized over exact phrasing.
+- **Latency** remains reasonable for real-time usage despite multi-stage processing (retrieval, reranking, generation, and safety checks).
+
+These results reflect strong retrieval accuracy and a foundation for safe, domain-grounded answer generation.
+
+---
+## How to Use This Repository
+
+To run the real-time medical QA system locally:
+
+### 1. Clone the Repository
+```bash
+git clone https://github.com/nabilazahraa/Medical-QA-with-RAG
+cd med-qa-system
+```
+
+### 2. Run the Backend
+```bash
+cd Backend
+```
+
+(Optional) Create and activate a virtual environment:
+```bash
+python3 -m venv venv
+source venv/bin/activate
+```
+
+Install dependencies:
+```bash
+pip install -r requirements.txt
+```
+
+Add your api keys in main.py file:
+```
+TOGETHER_API_KEY=your_together_api_key
+GOOGLE_API_KEY=your_gemini_api_key
+AZURE_KEY=your_azure_key
+AZURE_ENDPOINT=your_azure_endpoint
+```
+
+Run the FastAPI server:
+```bash
+uvicorn main:app --reload
+```
+
+### 3. Run the Frontend
+```bash
+cd ../Frontend
+npm install
+npm run dev
+```
+--- 
 
 ## 📢 Contributors
 
