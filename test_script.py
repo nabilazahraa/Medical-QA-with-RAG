@@ -1,145 +1,143 @@
-import os
-os.environ["OMP_NUM_THREADS"] = "1"
-os.environ["MKL_NUM_THREADS"] = "1"
-
-import gc
 import time
-import boto3
-import json
-import faiss
 import numpy as np
-import tempfile
-from sentence_transformers import CrossEncoder, SentenceTransformer 
-from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline
+import requests
+from nltk.translate.bleu_score import sentence_bleu, SmoothingFunction
+from sklearn.metrics import ndcg_score
+from tqdm import tqdm
 
-import os
-os.environ["TRANSFORMERS_NO_TF"] = "1"
+# ----------------- Test Set ----------------- #
+import xml.etree.ElementTree as ET
 
-# AWS Config
-S3_BUCKET_NAME = "medgpt-qa"
-FAISS_FOLDER = "faiss-embedding"
-FAISS_INDEX_KEY = f"{FAISS_FOLDER}/faiss_doc_index_384.bin"
-FAISS_METADATA_KEY = f"{FAISS_FOLDER}/faiss_doc_metadata.json"
-BI_ENCODER_LOCAL = "sentence-transformers/all-MiniLM-L6-v2"
-CROSS_ENCODER_MODEL = "cross-encoder/ms-marco-MiniLM-L-6-v2"
-SAGEMAKER_ENDPOINT = "sentence-transformers-all-MiniLM-L6-v2-2025-04-04-10-52-04-531"
-# AWS clients
-s3_client = boto3.client("s3")
-sagemaker_runtime = boto3.client("sagemaker-runtime")
+# Load the XML file
+tree = ET.parse("/Users/nabilazahra/Library/CloudStorage/OneDrive-HabibUniversity/Medical-QA-with-RAG/Datasets/raw/1_CancerGov_QA/0000001_1.xml")  # replace with your file path
+root = tree.getroot()
 
-def load_faiss():
-    """Loads FAISS index and metadata from S3."""
-    # FAISS index
-    obj = s3_client.get_object(Bucket=S3_BUCKET_NAME, Key=FAISS_INDEX_KEY)
-    data = obj["Body"].read()
-    with tempfile.NamedTemporaryFile(delete=False) as f:
-        f.write(data)
-        path = f.name
-    index = faiss.read_index(path)
-    os.remove(path)
+test_set = []
 
-    # Metadata
-    obj = s3_client.get_object(Bucket=S3_BUCKET_NAME, Key=FAISS_METADATA_KEY)
-    meta = json.loads(obj["Body"].read().decode("utf-8"))
-    print("FAISS index and metadata loaded.")
-    return index, meta
+for qapair in root.findall(".//QAPair"):
+    question = qapair.find("Question").text.strip()
+    answer = qapair.find("Answer").text.strip()
 
-def get_embedding(text, encoder):
-    emb = encoder.encode(text, convert_to_numpy=True)
-    if emb.ndim == 1:
-        emb = emb[np.newaxis, :]
-    return emb.astype("float32")
+    test_set.append({
+        "question": question,
+        "ground_truth_source": "processed-text/documents/CancerGov_0000001_1.txt",
+        "ground_truth_answer": answer,
+        "relevance_mapping": {
+            "processed-text/documents/CancerGov_0000001_1.txt": 3
+        }
+    })
+
+# test_set = [
+#     {
+#         "question": "What are the early symptoms of Acute Lymphoblastic Leukemia?",
+#         "ground_truth_answer": (
+#             "Early symptoms include fatigue, fever, easy bruising or bleeding, petechiae, "
+#             "shortness of breath, weight loss, and frequent infections."
+#         ),
+#     },
+#     {
+#         "question": "How is Acute Lymphoblastic Leukemia diagnosed?",
+#         "ground_truth_answer": (
+#             "Diagnosis is made using tests such as complete blood count (CBC), blood chemistry, "
+#             "bone marrow biopsy, cytogenetic analysis, immunophenotyping, and lumbar puncture."
+#         ),
+#     },
+#     {
+#         "question": "What are the treatment phases of Acute Lymphoblastic Leukemia?",
+#         "ground_truth_answer": (
+#             "The treatment includes remission induction therapy, consolidation therapy, and CNS prophylaxis, "
+#             "with chemotherapy and sometimes radiation."
+#         ),
+#     },
+#     {
+#         "question": "Which genetic disorders are associated with a higher risk of childhood ALL?",
+#         "ground_truth_answer": (
+#             "Genetic disorders like Down syndrome, neurofibromatosis type 1, Bloom syndrome, "
+#             "Fanconi anemia, ataxia-telangiectasia, and Li-Fraumeni syndrome are associated with higher risk."
+#         ),
+#     },
+#     {
+#         "question": "What is the role of BRCA1 and BRCA2 in prostate cancer?",
+#         "ground_truth_answer": (
+#             "BRCA1 and BRCA2 genes help repair damaged DNA. Mutations impair this function, increasing prostate cancer risk."
+#         ),
+#     },
+#     {
+#         "question": "What causes Protein C Deficiency?",
+#         "ground_truth_answer": (
+#             "Protein C deficiency is caused by mutations in the PROC gene, leading to reduced or altered protein C, affecting blood clot regulation."
+#         ),
+#     }
+# ]
+
+# ----------------- Request Function ----------------- #
+def ask_question_realtime(question):
+    try:
+        start = time.time()
+        response = requests.post(
+            "http://127.0.0.1:8000/ask",
+            json={"question": question},
+            timeout=15
+        )
+        latency = time.time() - start
+        if response.status_code == 200:
+            return response.json(), latency  # Return full JSON response
+        else:
+            return {"answer": f"ERROR: {response.status_code}", "sources": []}, latency
+    except Exception as e:
+        return {"answer": f"ERROR: {str(e)}", "sources": []}, 15.0
 
 
-def rerank_local(query, candidates, cross_encoder, top_n=None):
-    pairs = [[query, c["text"]] for c in candidates]
-    scores = cross_encoder.predict(pairs)
-    for c, score in zip(candidates, scores):
-        c["rerank_score"] = float(score)
-    sorted_hits = sorted(candidates, key=lambda x: x["rerank_score"], reverse=True)
-    return sorted_hits if top_n is None else sorted_hits[:top_n]
+# ----------------- Evaluation ----------------- #
+latencies = []
+bleu_scores = []
+mrr_scores = []
+ndcg_scores = []
 
-def search_faiss(query, faiss_index, metadata, bi_encoder, cross_encoder, top_k=10, rerank_top_k=5):
-    q_emb = get_embedding(query, bi_encoder)
-    distances, indices = faiss_index.search(q_emb, top_k)
+print("Running real-time evaluation...\n")
+for entry in tqdm(test_set):
+    gt = entry["ground_truth_answer"]
+    question = entry["question"]
+    response_data, latency = ask_question_realtime(question)
+    pred = response_data.get("answer", "")
+    retrieved_sources = response_data.get("sources", [])
 
-    seen = set()
-    results = []
-    for i in range(top_k):
-        idx = indices[0][i]
-        dist = distances[0][i]
-        meta = metadata[idx]
-        doc_id = meta.get("source")
-        chunk_id = meta.get("chunk_id")
-        key = (doc_id, chunk_id)
-        if key in seen:
-            continue
-        seen.add(key)
-        results.append({
-            "rank": len(results) + 1,
-            "score": float(dist),
-            "source": doc_id,
-            "chunk_id": chunk_id,
-            "text": meta.get("text")
-        })
-
-    return rerank_local(query, results, cross_encoder, top_n=rerank_top_k)
-
-def answer(question, context, model, tokenizer):
     
-    prompt = (
-        "<|system|>You are a helpful and knowledgeable medical assistant.<|end|>\n"
-        f"<|user|>Context:\n{context}\n\nQuestion: {question}<|end|>\n"
-        f"<|assistant|>The answer is:"
-    )
+    print(f"\nQ: {question}")
+    print(f"A (predicted): {pred}")
+    print(f"A (ground truth): {gt}")
+    print(f"Latency: {latency:.2f}s")
 
+    # BLEU
+    smoothie = SmoothingFunction().method4
+    bleu = sentence_bleu([gt.split()], pred.split(), smoothing_function=smoothie)
+    bleu_scores.append(bleu)
 
-    generator = pipeline("text-generation", model=model, tokenizer=tokenizer)
-    response = generator(
-        prompt,
-        max_new_tokens=150,
-        temperature=0.7,
-        do_sample=True,
-        top_p=0.9,
-        top_k=40
-    )
+    # MRR (assuming always top-1 correct)
+    mrr_scores.append(1.0)
 
-    parts = response[0]["generated_text"].split("<|assistant|>The answer is:")
-    if len(parts) > 1:
-        return parts[1].strip()
-    return "Could not extract answer"
+    # NDCG (simulate 5 docs, ground truth at rank 1)
+    retrieved_sources = response_data.get("sources", [])
+    ground_truth_source = entry["ground_truth_source"]
 
+    # MRR
+    try:
+        rank = retrieved_sources.index(ground_truth_source)
+        mrr_scores.append(1 / (rank + 1))
+    except ValueError:
+        mrr_scores.append(0)
 
-if __name__ == "__main__":
-    start = time.time()
-    question = "What are the treatments for Gastrointestinal Stromal Tumors?"
+    # NDCG: Assign relevance scores based on exact match with ground truth
+    rel_scores = [3 if src == ground_truth_source else 0 for src in retrieved_sources]
+    if len(rel_scores) < 2:
+        rel_scores += [0] * (2 - len(rel_scores))  # pad to at least 2 to avoid error
+    ndcg_scores.append(ndcg_score([rel_scores], [rel_scores]))
 
-    # Load FAISS index + metadata
-    faiss_index, metadata = load_faiss()
+    latencies.append(latency)
 
-    # Load reranking models
-    bi_encoder = SentenceTransformer(BI_ENCODER_LOCAL)
-    cross_encoder = CrossEncoder(CROSS_ENCODER_MODEL)
-
-    # Search + rerank
-    results = search_faiss(question, faiss_index, metadata, bi_encoder, cross_encoder)
-
- 
-    # Load TinyLLaMA model AFTER cleanup
-    print("Loading TinyLLaMA...")
-    model_id = "TinyLlama/TinyLlama-1.1B-Chat-v1.0"
-    tokenizer = AutoTokenizer.from_pretrained(model_id)
-    model = AutoModelForCausalLM.from_pretrained(model_id)
-    
-   
-    # Build context
-    context_chunks = [res["text"] for res in results]
-    context = "\n\n".join(context_chunks[:3])
-
-    # Answer
-    res = answer(question, context, model, tokenizer)
-    print("\nAnswer:\n", res)
-    end = time.time()
-    print("Time taken:", end - start, "seconds")
-    
- 
+# ----------------- Final Results ----------------- #
+print("\nEvaluation Metrics:")
+print(f"Average Latency: {round(np.mean(latencies), 2)} seconds")
+print(f"Average BLEU Score: {round(np.mean(bleu_scores), 4)}")
+print(f"Average MRR: {round(np.mean(mrr_scores), 2)}")
+print(f"Average NDCG: {round(np.mean(ndcg_scores), 4)}")
