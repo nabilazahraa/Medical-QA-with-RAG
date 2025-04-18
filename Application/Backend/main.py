@@ -28,8 +28,9 @@ os.environ["MKL_NUM_THREADS"] = "1"
 # Config
 S3_BUCKET_NAME = "med-qa-docs"
 FAISS_FOLDER = "tmp"
-FAISS_INDEX_KEY = "tmp/faiss_doc_index_384.bin"
-FAISS_METADATA_KEY = "tmp/faiss_doc_metadata.json"
+FAISS_INDEX_KEY = "doc/faiss_doc_index_384.bin"
+FAISS_METADATA_KEY = "doc/faiss_doc_metadata.json"
+
 BI_ENCODER_LOCAL = "sentence-transformers/all-MiniLM-L6-v2"
 CROSS_ENCODER_MODEL = "cross-encoder/ms-marco-MiniLM-L-6-v2"
 import openai
@@ -60,22 +61,34 @@ s3_client = boto3.client("s3")
 sagemaker_runtime = boto3.client("sagemaker-runtime")
 
 
-def load_faiss():
-    """Loads FAISS index and metadata from S3."""
-    # FAISS index
-    obj = s3_client.get_object(Bucket=S3_BUCKET_NAME, Key=FAISS_INDEX_KEY)
-    data = obj["Body"].read()
-    with tempfile.NamedTemporaryFile(delete=False) as f:
-        f.write(data)
-        path = f.name
-    index = faiss.read_index(path)
-    os.remove(path)
+# def load_faiss():
+#     """Loads FAISS index and metadata from S3."""
+#     # FAISS index
+#     obj = s3_client.get_object(Bucket=S3_BUCKET_NAME, Key=FAISS_INDEX_KEY)
+#     data = obj["Body"].read()
+#     with tempfile.NamedTemporaryFile(delete=False) as f:
+#         f.write(data)
+#         path = f.name
+#     index = faiss.read_index(path)
+#     os.remove(path)
 
-    # Metadata
-    obj = s3_client.get_object(Bucket=S3_BUCKET_NAME, Key=FAISS_METADATA_KEY)
-    meta = json.loads(obj["Body"].read().decode("utf-8"))
+#     # Metadata
+#     obj = s3_client.get_object(Bucket=S3_BUCKET_NAME, Key=FAISS_METADATA_KEY)
+#     meta = json.loads(obj["Body"].read().decode("utf-8"))
+#     print("FAISS index and metadata loaded.")
+#     return index, meta
+
+def load_faiss():
+    """Loads FAISS index and metadata from local disk."""
+    # Load FAISS index from local path
+    index = faiss.read_index(FAISS_INDEX_KEY)
+
+    # Load metadata from local path
+    with open(FAISS_METADATA_KEY, "r", encoding="utf-8") as f:
+        metadata = json.load(f)
+
     print("FAISS index and metadata loaded.")
-    return index, meta
+    return index, metadata
 
 
 def get_embedding(text, encoder):
@@ -197,7 +210,7 @@ def generate_answer(question, context, model= "meta-llama/Llama-3.3-70B-Instruct
         model=model,
         messages=[
             {"role": "system", 
-             "content":  "You are a helpful and polite assistant. Answer questions strictly based on the retrieved context. "
+             "content":  "You are a helpful and polite medical assistant. Answer questions strictly based on the retrieved context. "
                     "If the user asks a medical question, respond using only the context provided. Use the context to answer the question. "
                     "If the user asks about weather, sports, news, technology, or anything unrelated to health or medicine, respond with:\n"
                 "\"I'm sorry, I can only assist with medical or health-related questions.\"\n\n"
