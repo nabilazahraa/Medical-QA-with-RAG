@@ -49,7 +49,7 @@ Each document is embedded and stored using **FAISS**, and metadata is preserved 
 
 ---
 
-## 🔒 Safety and Relevance Filters
+## Safety and Relevance Filters
 
 To ensure safety and relevance:
 
@@ -193,6 +193,6 @@ npm run dev
 
 ---
 
-## 📜 License
+## License
 
 This project is open-source under the **MIT License**.
