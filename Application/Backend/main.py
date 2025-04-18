@@ -19,20 +19,12 @@ import requests
 import os
 import boto3
 import google.generativeai as genai
-from dotenv import load_dotenv
-import openai
-
-load_dotenv()
 
 
-openai.api_key = os.getenv("TOGETHER_API_KEY")
-GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
-azure_key = os.getenv("AZURE_KEY")
-azure_endpoint = os.getenv("AZURE_ENDPOINT")
+os.environ["TOGETHER_API_KEY"] = "7a3557cc611a053545585cb7e7107caec0e6740a0d576d6f7b37c51aa5bb0fa2"
 
 os.environ["OMP_NUM_THREADS"] = "1"
 os.environ["MKL_NUM_THREADS"] = "1"
-
 # Config
 S3_BUCKET_NAME = "med-qa-docs"
 FAISS_FOLDER = "tmp"
@@ -40,20 +32,29 @@ FAISS_INDEX_KEY = "tmp/faiss_doc_index_384.bin"
 FAISS_METADATA_KEY = "tmp/faiss_doc_metadata.json"
 BI_ENCODER_LOCAL = "sentence-transformers/all-MiniLM-L6-v2"
 CROSS_ENCODER_MODEL = "cross-encoder/ms-marco-MiniLM-L-6-v2"
+import openai
 
+GOOGLE_API_KEY = "AIzaSyB9db9uy39qfJtfJRD2hGGMxpZ5ccFOhZM"
+
+openai.api_base = "https://api.together.xyz/v1"
+openai.api_key = os.getenv("TOGETHER_API_KEY")
+
+azure_endpoint = "https://tuco.cognitiveservices.azure.com/"  
+azure_key = "EsuxGP8SUN7KyUUZiotqviCgWK32yYzeoFVJEUrt0EMNqEbAUpiCJQQJ99BBACYeBjFXJ3w3AAAHACOGSBj5"
 
 # FastAPI app
 app = FastAPI()
 # Add this block right after creating `app`
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  
+    allow_origins=["*"],  # Replace with ["http://localhost:3000"] during dev for safety
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-
+genai.configure(api_key=GOOGLE_API_KEY)
+model = genai.GenerativeModel("gemini-2.0-flash")
 # ------------------ Loading at startup ------------------
 s3_client = boto3.client("s3")
 sagemaker_runtime = boto3.client("sagemaker-runtime")
@@ -216,11 +217,12 @@ def generate_answer(question, context, model= "meta-llama/Llama-3.3-70B-Instruct
 # Load models and data once at startup
 print("Initializing models and index...")
 faiss_index, metadata = load_faiss()
+print("loading models.")
 bi_encoder = SentenceTransformer(BI_ENCODER_LOCAL)
 cross_encoder = CrossEncoder(CROSS_ENCODER_MODEL)
-genai.configure(api_key=GOOGLE_API_KEY)
-model = genai.GenerativeModel("gemini-2.0-flash")
-print("Initialization complete")
+print("Models loaded.")
+print("Loaded")
+
 
 
 def is_safe_content_sdk(text: str, endpoint: str, key: str) -> bool:
