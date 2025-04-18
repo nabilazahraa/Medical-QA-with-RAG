@@ -78,12 +78,12 @@ To ensure safety and relevance:
 
 | Week  | Task                          | Status     | Notes                                  |
 |-------|-------------------------------|------------|----------------------------------------|
-| Week 8  | Dataset Parsing & Cleaning     | ✅ Complete | MedQuAD and CancerGov parsed           |
-| Week 9  | FAISS + Metadata Upload        | ✅ Complete | Indexed on AWS S3                      |
-| Week 10 | Backend Setup                  | ✅ Complete | Search + reranking + LLM API           |
-| Week 11 | Gemini + Azure Content Filters | ✅ Complete | Integrated for QA safety               |
-| Week 11 | Front-End Integration          | ✅ Complete | React-based chat interface             |
-| Week 12 | Testing                        | ✅ Complete | Evaluation metrics                     |
+| Week 8  | Dataset Parsing & Cleaning     | Complete | MedQuAD and CancerGov parsed           |
+| Week 9  | FAISS + Metadata Upload        | Complete | Indexed on AWS S3                      |
+| Week 10 | Backend Setup                  | Complete | Search + reranking + LLM API           |
+| Week 11 | Gemini + Azure Content Filters | Complete | Integrated for QA safety               |
+| Week 11 | Front-End Integration          | Complete | React-based chat interface             |
+| Week 12 | Testing                        | Complete | Evaluation metrics                     |
 
 ---
 
@@ -151,7 +151,7 @@ cd med-qa-system
 
 ### 2. Run the Backend
 ```bash
-cd Backend
+cd ./Application/Backend
 ```
 
 (Optional) Create and activate a virtual environment:
@@ -180,7 +180,7 @@ uvicorn main:app --reload
 
 ### 3. Run the Frontend
 ```bash
-cd ../Frontend
+cd ./Application/Application
 npm install
 npm run dev
 ```
