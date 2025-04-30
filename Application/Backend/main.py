@@ -34,15 +34,15 @@ BI_ENCODER_LOCAL = "sentence-transformers/all-MiniLM-L6-v2"
 CROSS_ENCODER_MODEL = "cross-encoder/ms-marco-MiniLM-L-6-v2"
 
 
-os.environ["TOGETHER_API_KEY"] = "your-api-key"
+os.environ["TOGETHER_API_KEY"] = "7a3557cc611a053545585cb7e7107caec0e6740a0d576d6f7b37c51aa5bb0fa2"
 
-GOOGLE_API_KEY = "your-api-key"
+GOOGLE_API_KEY = "AIzaSyB9db9uy39qfJtfJRD2hGGMxpZ5ccFOhZM"
 
 openai.api_base = "https://api.together.xyz/v1"
 openai.api_key = os.getenv("TOGETHER_API_KEY")
 
-azure_endpoint = "your-azure-endpoint"  
-azure_key = "your-azure-key"
+azure_endpoint = "https://tuco.cognitiveservices.azure.com/"  
+azure_key = "EsuxGP8SUN7KyUUZiotqviCgWK32yYzeoFVJEUrt0EMNqEbAUpiCJQQJ99BBACYeBjFXJ3w3AAAHACOGSBj5"
 
 # FastAPI app
 app = FastAPI()
